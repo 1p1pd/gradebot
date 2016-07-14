@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <title>中超联赛 {{year}}</title>
+    </head>
+    <body>
+        <h1>CSL {{year}}</h1>
+    <ul>
+        {{#each teams}}
+        <li class="{{#if @first}}champion{{/if}}">
+            {{@index}}. <b>{{name}}</b>: {{pts}}
+        </li>
+        {{/each}}
+    </ul>
+    <ul>
+    {{#each notes}}
+        <li class="{{#if @first}}champion{{/if}}"> <b>{{title}}</b>:</li> {{body}}
+    {{/each}}
+    </ul>
+    <p>Rendered by Handlebars from {{engine}} data.</p>
+    </body>
+</html>
