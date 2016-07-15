@@ -25,7 +25,7 @@ pub fn establish_connection() -> PgConnection {
         .expect(&format!("Error connecting to {}", database_url))
 }
 
-use self::models::{Post, NewPost};
+use self::models::{Post, NewPost, User, NewUser};
 
 pub fn create_post<'a>(conn: &PgConnection, title: &'a str, body: &'a str) -> Post {
     use schema::posts;
@@ -38,4 +38,17 @@ pub fn create_post<'a>(conn: &PgConnection, title: &'a str, body: &'a str) -> Po
     diesel::insert(&new_post).into(posts::table)
         .get_result(conn)
         .expect("Error saving new post")
+}
+
+pub fn create_user<'a>(conn: &PgConnection, username: &'a str, passwd: &'a str) -> User {
+    use schema::users;
+
+    let new_user = NewUser {
+        username: username,
+        passwd: passwd,
+    };
+
+    diesel::insert(&new_user).into(users::table)
+        .get_result(conn)
+        .expect("Error saving new user")
 }

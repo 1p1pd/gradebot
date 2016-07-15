@@ -14,7 +14,6 @@ use iron::prelude::*;
 use iron::{status};
 use router::Router;
 use std::io::Read;
-use rustc_serialize::json;
 use hbs::{Template, HandlebarsEngine, DirectorySource, MemorySource};
 use self::iron_test::*;
 use self::iron_test::models::*;
@@ -106,10 +105,32 @@ fn input(_: &mut Request) -> IronResult<Response> {
     Ok(resp)
 }
 
-fn login(_: &mut Request) -> IronResult<Response> {
-    let mut resp = Response::new();
-    resp.set_mut(Template::new("memory", ())).set_mut(status::Ok);
-    Ok(resp)
+#[derive(RustcEncodable, RustcDecodable)]
+struct Userlogin {
+    username: String,
+    passwd: String,
+}
+
+fn login(request: &mut Request) -> IronResult<Response> {
+    use iron_test::schema::users::dsl::*;
+    let mut payload = String::new();
+    request.body.read_to_string(&mut payload).unwrap();
+    let v: Vec<&str> = payload.split(|c| c == '&' || c == '=').collect();
+    for elem in &v {
+        println!("{:?}", elem);
+    }
+    let tempuser = Userlogin{username: v[1].to_string(),
+                            passwd: v[3].to_string()};
+    let connection = establish_connection();
+    let results = users.filter(username.eq(tempuser.username))
+        .load::<User>(&connection)
+        .expect("No such user");
+    for elem in &results {
+        if tempuser.passwd == elem.passwd {
+            return Ok(Response::with((status::Ok, "Login success!")));
+        }
+    }
+    Ok(Response::with((status::BadRequest, "Login fail!")))
 }
 
 fn memory(_: &mut Request) -> IronResult<Response> {
@@ -138,7 +159,7 @@ fn main() {
     let mem_templates = btreemap! {
         "memory".to_owned() => "<h1>Memory Template</h1>".to_owned()
     };
-    // add a memory based source
+    // add a memory basrustc-serialize = "*"ed source
     hbse.add(Box::new(MemorySource(mem_templates)));
 
     // load templates from all registered sources
@@ -151,7 +172,7 @@ fn main() {
     router
         .get("/", index)
         .get("/input", input)
-        .get("/login", login)
+        .post("/login", login)
         .get("/mem", memory)
         .get("/temp", temp);
     let mut chain = Chain::new(router);
